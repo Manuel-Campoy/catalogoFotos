@@ -1,0 +1,666 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GradLens — Directorio de Fotografía de Graduación</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,700;1,400;1,500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --ink:#111008;--ink2:#2C2A22;--mid:#6B6558;--muted:#9E9888;
+  --cream:#FDFBF6;--cream2:#F5F1E8;--cream3:#EDE7D8;
+  --gold:#B8923A;--gold-l:#D4AE62;--gold-pale:#FBF4E3;--white:#FFFFFF;
+  --border:rgba(184,146,58,.18);--border2:rgba(184,146,58,.35);
+  --r:6px;--shadow:0 4px 24px rgba(17,16,8,.10);--shadow-lg:0 12px 48px rgba(17,16,8,.16);
+}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--cream);color:var(--ink);font-size:15px;line-height:1.6}
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(80px);z-index:999;background:var(--ink);color:var(--cream);padding:12px 28px;border-radius:40px;font-size:14px;opacity:0;transition:all .3s;pointer-events:none;white-space:nowrap}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1}
+nav{position:fixed;top:0;left:0;right:0;z-index:100;height:60px;display:flex;align-items:center;background:rgba(253,251,246,.92);backdrop-filter:blur(14px);border-bottom:1px solid var(--border)}
+.nav-w{max-width:1200px;margin:0 auto;width:100%;padding:0 2rem;display:flex;align-items:center;justify-content:space-between;gap:2rem}
+.logo{font-family:'Playfair Display',serif;font-size:20px;font-weight:700;color:var(--ink);text-decoration:none;display:flex;align-items:center;gap:4px}
+.logo-a{color:var(--gold)}
+.logo-sup{font-size:10px;letter-spacing:.12em;font-family:'Outfit',sans-serif;font-weight:400;color:var(--muted);text-transform:uppercase;margin-left:4px;margin-top:2px}
+.nav-search{flex:1;max-width:340px;position:relative}
+.nav-search input{width:100%;background:var(--cream2);border:1px solid var(--border);border-radius:40px;padding:8px 16px 8px 36px;font-size:13px;font-family:'Outfit',sans-serif;color:var(--ink);outline:none;transition:border-color .2s}
+.nav-search input:focus{border-color:var(--gold-l)}
+.nav-search-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.4;pointer-events:none}
+.nav-r{display:flex;align-items:center;gap:10px}
+.btn-ghost{background:none;border:1px solid var(--border2);color:var(--ink);padding:7px 18px;border-radius:var(--r);font-size:13px;font-family:'Outfit',sans-serif;cursor:pointer;transition:all .2s}
+.btn-ghost:hover{background:var(--cream2);border-color:var(--gold)}
+.btn-solid{background:var(--ink);color:var(--cream);border:none;padding:8px 20px;border-radius:var(--r);font-size:13px;font-family:'Outfit',sans-serif;cursor:pointer;transition:background .2s}
+.btn-solid:hover{background:var(--ink2)}
+.av-pill{display:flex;align-items:center;gap:8px}
+.av-circle{width:32px;height:32px;border-radius:50%;background:var(--gold-pale);border:1.5px solid var(--gold-l);display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:600;color:var(--gold)}
+.av-name{font-size:13px;color:var(--mid)}
+#guest-nav{display:flex;align-items:center;gap:8px}
+#user-nav{display:none;align-items:center;gap:8px}
+/* HERO */
+.hero{margin-top:60px;background:var(--ink);padding:72px 2rem 60px;position:relative;overflow:hidden;text-align:center}
+.hero::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse 90% 50% at 50% -10%,rgba(184,146,58,.14),transparent 65%);pointer-events:none}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:8px;font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-l);margin-bottom:20px}
+.hero-eyebrow::before,.hero-eyebrow::after{content:'';width:24px;height:1px;background:var(--gold)}
+.hero h1{font-family:'Playfair Display',serif;font-size:clamp(34px,5vw,58px);font-weight:400;color:var(--cream);line-height:1.15;margin-bottom:14px}
+.hero h1 em{font-style:italic;color:var(--gold-l)}
+.hero-sub{font-size:15px;color:rgba(253,251,246,.5);max-width:480px;margin:0 auto 32px}
+.hero-search{max-width:560px;margin:0 auto;display:flex;background:var(--cream);border-radius:var(--r);overflow:hidden;box-shadow:var(--shadow-lg)}
+.hero-search input{flex:1;border:none;padding:14px 18px;font-size:14px;font-family:'Outfit',sans-serif;color:var(--ink);background:transparent;outline:none}
+.hero-search select{border:none;border-left:1px solid var(--border);padding:0 14px;font-size:13px;font-family:'Outfit',sans-serif;color:var(--mid);background:var(--cream2);outline:none;cursor:pointer}
+.hero-search button{background:var(--gold);color:var(--white);border:none;padding:0 24px;font-size:14px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:background .2s}
+.hero-search button:hover{background:var(--gold-l)}
+.hero-stats{display:flex;justify-content:center;gap:48px;margin-top:40px;padding-top:32px;border-top:1px solid rgba(253,251,246,.08);flex-wrap:wrap}
+.h-stat-n{font-family:'Playfair Display',serif;font-size:26px;font-weight:400;color:var(--gold-l)}
+.h-stat-l{font-size:12px;color:rgba(253,251,246,.4);margin-top:2px}
+/* FILTERS */
+.filters-bar{background:var(--white);border-bottom:1px solid var(--border);position:sticky;top:60px;z-index:80}
+.filters-w{max-width:1200px;margin:0 auto;padding:0 2rem;display:flex;align-items:center;gap:10px;overflow-x:auto;scrollbar-width:none;height:52px}
+.filters-w::-webkit-scrollbar{display:none}
+.fchip{flex-shrink:0;padding:6px 16px;border-radius:40px;border:1px solid var(--border);font-size:12px;font-weight:500;color:var(--mid);cursor:pointer;background:transparent;font-family:'Outfit',sans-serif;transition:all .2s;white-space:nowrap}
+.fchip:hover,.fchip.on{background:var(--ink);color:var(--cream);border-color:var(--ink)}
+.f-sep{width:1px;height:20px;background:var(--border);flex-shrink:0}
+.sort-sel{background:none;border:none;font-size:12px;font-family:'Outfit',sans-serif;color:var(--mid);cursor:pointer;outline:none;padding:4px}
+.res-count{font-size:12px;color:var(--muted);margin-left:auto;flex-shrink:0}
+/* MAIN */
+.main{max-width:1200px;margin:0 auto;padding:48px 2rem 80px}
+.sec-eye{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;display:block}
+.sec-title{font-family:'Playfair Display',serif;font-size:28px;font-weight:400;color:var(--ink)}
+/* FEATURED */
+.feat-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:56px}
+.vf-card{border-radius:10px;overflow:hidden;background:var(--ink);position:relative;cursor:pointer;min-height:290px;display:flex;flex-direction:column;justify-content:flex-end;transition:transform .25s;border:1px solid rgba(255,255,255,.04)}
+.vf-card:hover{transform:translateY(-3px)}
+.vf-bg{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:88px;opacity:.12}
+.vf-overlay{position:absolute;inset:0;background:linear-gradient(to top,rgba(17,16,8,.88) 30%,rgba(17,16,8,.15))}
+.vf-badge{position:absolute;top:14px;left:14px;background:var(--gold);color:var(--white);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 12px;border-radius:20px;font-weight:500}
+.vf-body{position:relative;padding:22px}
+.vf-cat{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold-l);margin-bottom:5px}
+.vf-name{font-family:'Playfair Display',serif;font-size:22px;font-weight:500;color:var(--cream);margin-bottom:6px}
+.vf-desc{font-size:13px;color:rgba(253,251,246,.55);margin-bottom:12px;line-height:1.5}
+.vf-meta{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.vf-rating{font-size:13px;color:rgba(253,251,246,.65)}
+.vf-stars{color:var(--gold-l);font-size:12px}
+.vf-price{font-size:13px;color:var(--gold-l);font-weight:500}
+.vf-loc{font-size:12px;color:rgba(253,251,246,.4)}
+/* VENDOR GRID */
+.vgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:20px}
+.vc{background:var(--white);border:1px solid var(--border);border-radius:10px;overflow:hidden;cursor:pointer;transition:transform .22s,box-shadow .22s}
+.vc:hover{transform:translateY(-3px);box-shadow:var(--shadow)}
+.vc-thumb{height:175px;display:flex;align-items:center;justify-content:center;font-size:54px;position:relative}
+.vc-thumb-fade{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 55%,rgba(17,16,8,.06))}
+.vc-ver{position:absolute;top:10px;right:10px;background:var(--cream);border:1px solid var(--border2);border-radius:20px;font-size:10px;font-weight:500;color:var(--gold);padding:3px 10px}
+.vc-body{padding:16px}
+.vc-cat{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:3px}
+.vc-name{font-family:'Playfair Display',serif;font-size:17px;font-weight:500;color:var(--ink);margin-bottom:4px}
+.vc-desc{font-size:12px;color:var(--mid);margin-bottom:10px;line-height:1.5;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.vc-loc{font-size:11px;color:var(--muted);margin-bottom:10px}
+.vc-foot{display:flex;align-items:center;justify-content:space-between;padding-top:10px;border-top:1px solid rgba(0,0,0,.05)}
+.vc-rating{display:flex;align-items:center;gap:5px;font-size:12px;color:var(--mid)}
+.vc-stars{color:var(--gold-l);font-size:12px}
+.vc-price{font-size:13px;font-weight:600;color:var(--ink);text-align:right}
+.vc-price small{font-weight:400;color:var(--muted);font-size:11px}
+.vc-pkgs{font-size:11px;color:var(--muted)}
+/* DETAIL OVERLAY */
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(17,16,8,.65);backdrop-filter:blur(5px);overflow-y:auto;padding:36px 16px}
+.overlay.open{display:block}
+.d-modal{background:var(--cream);border-radius:14px;max-width:860px;margin:0 auto;overflow:hidden;position:relative;animation:rise .28s ease}
+@keyframes rise{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+.d-close{position:absolute;top:14px;right:14px;z-index:10;background:rgba(253,251,246,.9);border:1px solid var(--border);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--mid);transition:all .2s}
+.d-close:hover{color:var(--ink);background:var(--cream2)}
+.d-hero{height:230px;display:flex;align-items:center;justify-content:center;font-size:76px;position:relative}
+.d-hero-ovl{position:absolute;inset:0;background:linear-gradient(to top,rgba(17,16,8,.65),transparent)}
+.d-badge{position:absolute;top:14px;left:14px;background:var(--gold);color:var(--white);font-size:10px;letter-spacing:.1em;text-transform:uppercase;padding:4px 14px;border-radius:20px}
+.d-body{padding:30px}
+.d-top{display:grid;grid-template-columns:1fr auto;gap:20px;align-items:start;margin-bottom:24px}
+.d-cat{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);margin-bottom:5px}
+.d-name{font-family:'Playfair Display',serif;font-size:26px;font-weight:500;color:var(--ink);margin-bottom:8px}
+.d-meta{display:flex;flex-wrap:wrap;gap:14px;font-size:13px;color:var(--mid)}
+.d-desc{font-size:14px;color:var(--mid);line-height:1.7;margin-bottom:26px}
+.d-sec{margin-bottom:30px}
+.d-sec-title{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin-bottom:14px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+.pkg-row{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.pm{border:1px solid var(--border);border-radius:var(--r);padding:16px;background:var(--white);transition:border-color .2s}
+.pm:hover{border-color:var(--gold-l)}
+.pm.hi{border-color:var(--gold);border-width:2px;background:var(--gold-pale)}
+.pm-badge{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:6px}
+.pm-name{font-family:'Playfair Display',serif;font-size:16px;color:var(--ink);margin-bottom:6px}
+.pm-price{font-size:19px;font-weight:600;color:var(--ink);font-family:'Playfair Display',serif;margin-bottom:10px}
+.pm-price small{font-size:11px;font-weight:400;color:var(--muted);font-family:'Outfit',sans-serif}
+.pm-feats{list-style:none;margin-bottom:12px}
+.pm-feats li{font-size:11px;color:var(--mid);padding:3px 0;display:flex;gap:6px;border-bottom:1px solid rgba(0,0,0,.04)}
+.pm-feats li::before{content:'›';color:var(--gold);flex-shrink:0}
+.btn-res{width:100%;background:var(--ink);color:var(--cream);border:none;padding:8px;border-radius:var(--r);font-size:12px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:background .2s}
+.btn-res:hover{background:var(--ink2)}
+.btn-res.out{background:transparent;color:var(--ink);border:1px solid var(--border2)}
+.btn-res.out:hover{background:var(--cream2)}
+/* REVIEWS */
+.rv-list{display:flex;flex-direction:column;gap:12px;margin-bottom:18px}
+.rv{background:var(--cream2);border-radius:var(--r);padding:14px;border:1px solid var(--border)}
+.rv-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px}
+.rv-user{display:flex;align-items:center;gap:8px}
+.rv-av{width:30px;height:30px;border-radius:50%;background:var(--gold-pale);display:flex;align-items:center;justify-content:center;font-size:10px;font-weight:600;color:var(--gold);border:1px solid var(--gold-l)}
+.rv-uname{font-size:13px;font-weight:500;color:var(--ink)}
+.rv-pkg{font-size:11px;color:var(--muted)}
+.rv-stars-d{font-size:13px;color:var(--gold-l)}
+.rv-text{font-size:13px;color:var(--mid);line-height:1.6}
+.rv-date{font-size:11px;color:var(--muted);margin-top:5px}
+/* REVIEW FORM */
+.rv-form{background:var(--cream2);border:1px solid var(--border);border-radius:var(--r);padding:18px}
+.rv-form h5{font-family:'Playfair Display',serif;font-size:17px;color:var(--ink);margin-bottom:3px}
+.rv-form-sub{font-size:12px;color:var(--mid);margin-bottom:14px}
+.f-field{margin-bottom:11px}
+.f-label{display:block;font-size:11px;font-weight:500;letter-spacing:.05em;color:var(--mid);margin-bottom:4px}
+.f-ctrl{width:100%;background:var(--white);border:1px solid var(--border2);border-radius:var(--r);padding:8px 11px;font-size:13px;font-family:'Outfit',sans-serif;color:var(--ink);outline:none;transition:border-color .2s}
+.f-ctrl:focus{border-color:var(--gold)}
+textarea.f-ctrl{resize:vertical;min-height:76px}
+.f-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.sp{display:flex;gap:6px}
+.sp-s{font-size:22px;cursor:pointer;color:var(--border2);transition:all .15s;user-select:none;line-height:1}
+.sp-s:hover,.sp-s.on{color:var(--gold-l);transform:scale(1.15)}
+.alert{padding:9px 13px;border-radius:var(--r);font-size:12px;margin-bottom:10px;display:none}
+.alert.show{display:block}
+.alert.ok{background:#EAF3DE;color:#3B6D11;border:1px solid #C0DD97}
+.alert.err{background:#FCEBEB;color:#A32D2D;border:1px solid #F7C1C1}
+/* AUTH */
+.auth-ovl{display:none;position:fixed;inset:0;z-index:300;background:rgba(17,16,8,.75);backdrop-filter:blur(6px);align-items:center;justify-content:center}
+.auth-ovl.open{display:flex}
+.auth-modal{background:var(--cream);border-radius:12px;padding:38px;width:100%;max-width:396px;position:relative;animation:rise .25s ease}
+.auth-x{position:absolute;top:14px;right:14px;background:none;border:none;cursor:pointer;font-size:20px;color:var(--muted);transition:color .2s}
+.auth-x:hover{color:var(--ink)}
+.auth-logo{font-family:'Playfair Display',serif;font-size:21px;font-weight:700;color:var(--ink);margin-bottom:2px}
+.auth-logo span{color:var(--gold)}
+.auth-sub{font-size:13px;color:var(--mid);margin-bottom:22px}
+.a-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:20px}
+.a-tab{flex:1;text-align:center;padding:10px;font-size:13px;font-weight:500;color:var(--muted);cursor:pointer;border-bottom:2px solid transparent;transition:all .2s;font-family:'Outfit',sans-serif}
+.a-tab.on{color:var(--ink);border-bottom-color:var(--gold)}
+.a-panel{display:none}
+.a-panel.on{display:block}
+.btn-auth-full{width:100%;background:var(--ink);color:var(--cream);border:none;padding:12px;border-radius:var(--r);font-size:14px;font-family:'Outfit',sans-serif;font-weight:500;cursor:pointer;transition:background .2s;margin-top:6px}
+.btn-auth-full:hover{background:var(--ink2)}
+.a-switch{text-align:center;margin-top:12px;font-size:12px;color:var(--muted)}
+.a-switch a{color:var(--gold);cursor:pointer;text-decoration:none}
+/* HOW IT WORKS */
+.hiw{background:var(--ink);padding:60px 2rem}
+.hiw-w{max-width:900px;margin:0 auto;text-align:center}
+.hiw h2{font-family:'Playfair Display',serif;font-size:30px;font-weight:400;color:var(--cream);margin-bottom:6px}
+.hiw-sub{font-size:14px;color:rgba(253,251,246,.45);margin-bottom:36px}
+.hiw-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.hiw-step{text-align:center}
+.hiw-icon{width:52px;height:52px;border-radius:50%;border:1px solid rgba(184,146,58,.3);display:flex;align-items:center;justify-content:center;font-size:20px;margin:0 auto 12px}
+.hiw-n{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-l);margin-bottom:3px}
+.hiw-t{font-size:14px;color:var(--cream);font-weight:500;margin-bottom:3px}
+.hiw-d{font-size:12px;color:rgba(253,251,246,.4);line-height:1.5}
+/* FOOTER */
+footer{background:var(--ink2);padding:36px 2rem 24px;border-top:1px solid rgba(253,251,246,.06)}
+.foot-w{max-width:1200px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+.foot-logo{font-family:'Playfair Display',serif;font-size:17px;font-weight:700;color:var(--cream)}
+.foot-logo span{color:var(--gold)}
+.foot-links{display:flex;gap:20px}
+.foot-links a{font-size:12px;color:rgba(253,251,246,.38);text-decoration:none;transition:color .2s}
+.foot-links a:hover{color:var(--cream)}
+.foot-copy{width:100%;text-align:center;font-size:11px;color:rgba(253,251,246,.22);margin-top:20px;padding-top:18px;border-top:1px solid rgba(253,251,246,.06)}
+@media(max-width:768px){.feat-grid{grid-template-columns:1fr}.hiw-steps{grid-template-columns:1fr 1fr}.d-top{grid-template-columns:1fr}.f-row{grid-template-columns:1fr}.nav-search{display:none}}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-w">
+    <a class="logo" href="#">Grad<span class="logo-a">Lens</span><span class="logo-sup">Mx</span></a>
+    <div class="nav-search">
+      <svg class="nav-search-icon" width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="6" cy="6" r="4.5" stroke="#111008" stroke-width="1.2"/><path d="M9.5 9.5 12 12" stroke="#111008" stroke-width="1.2" stroke-linecap="round"/></svg>
+      <input type="text" placeholder="Buscar fotógrafo o ciudad…" oninput="handleSearch(this.value)">
+    </div>
+    <div class="nav-r">
+      <div id="guest-nav">
+        <button class="btn-ghost" onclick="openAuth()">Iniciar sesión</button>
+        <button class="btn-solid" onclick="openAuth('register')">Registrarse</button>
+      </div>
+      <div id="user-nav">
+        <div class="av-pill">
+          <div class="av-circle" id="av-init"></div>
+          <span class="av-name" id="av-nm"></span>
+        </div>
+        <button class="btn-ghost" onclick="doLogout()">Salir</button>
+      </div>
+    </div>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-eyebrow">Directorio verificado · Sonora 2025</div>
+  <h1>Encuentra al fotógrafo<br>perfecto para tu <em>graduación</em></h1>
+  <p class="hero-sub">Compara estudios, lee reseñas reales y reserva con total confianza.</p>
+  <div class="hero-search">
+    <input type="text" placeholder="Ciudad, nombre del estudio…" oninput="handleSearch(this.value)">
+    <select onchange="handleCityFilter(this.value)">
+      <option value="">Todas las ciudades</option>
+      <option>Hermosillo</option><option>Obregón</option><option>Nogales</option><option>Guaymas</option>
+    </select>
+    <button onclick="scrollToVendors()">Buscar</button>
+  </div>
+  <div class="hero-stats">
+    <div><div class="h-stat-n">38</div><div class="h-stat-l">Estudios verificados</div></div>
+    <div><div class="h-stat-n">4.8★</div><div class="h-stat-l">Calificación promedio</div></div>
+    <div><div class="h-stat-n">5,000+</div><div class="h-stat-l">Graduados felices</div></div>
+    <div><div class="h-stat-n">Gratis</div><div class="h-stat-l">Sin comisión para ti</div></div>
+  </div>
+</section>
+
+<!-- FILTERS -->
+<div class="filters-bar">
+  <div class="filters-w">
+    <button class="fchip on" onclick="setTag(this,'')">Todos</button>
+    <button class="fchip" onclick="setTag(this,'Estudio')">Estudio</button>
+    <button class="fchip" onclick="setTag(this,'Freelance')">Freelance</button>
+    <button class="fchip" onclick="setTag(this,'Premium')">Premium</button>
+    <button class="fchip" onclick="setTag(this,'Económico')">Económico</button>
+    <div class="f-sep"></div>
+    <select class="sort-sel" onchange="setSort(this.value)">
+      <option value="rating">Mejor calificados</option>
+      <option value="price_asc">Menor precio</option>
+      <option value="price_desc">Mayor precio</option>
+      <option value="reviews">Más reseñas</option>
+    </select>
+    <span class="res-count" id="res-count"></span>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="main" id="main-section">
+  <div style="margin-bottom:14px">
+    <span class="sec-eye">Destacados</span>
+    <h2 class="sec-title">Estudios recomendados</h2>
+  </div>
+  <div class="feat-grid" id="feat-grid"></div>
+
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:22px">
+    <div><span class="sec-eye">Directorio completo</span><h2 class="sec-title">Todos los proveedores</h2></div>
+  </div>
+  <div class="vgrid" id="vgrid"></div>
+  <div id="empty" style="display:none;text-align:center;padding:56px 0;color:var(--muted)">
+    <div style="font-size:36px;margin-bottom:10px">🔍</div>
+    <p>No encontramos proveedores con esos filtros.</p>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section class="hiw" id="como">
+  <div class="hiw-w">
+    <div class="hero-eyebrow" style="justify-content:center;margin-bottom:12px">Proceso simple</div>
+    <h2>¿Cómo funciona GradLens?</h2>
+    <p class="hiw-sub">Conectamos graduados con los mejores fotógrafos de Sonora</p>
+    <div class="hiw-steps">
+      <div class="hiw-step"><div class="hiw-icon">🔍</div><div class="hiw-n">Paso 1</div><div class="hiw-t">Explora</div><div class="hiw-d">Compara estudios, portafolios y paquetes fácilmente</div></div>
+      <div class="hiw-step"><div class="hiw-icon">⭐</div><div class="hiw-n">Paso 2</div><div class="hiw-t">Lee reseñas</div><div class="hiw-d">Opiniones verificadas de graduados como tú</div></div>
+      <div class="hiw-step"><div class="hiw-icon">📅</div><div class="hiw-n">Paso 3</div><div class="hiw-t">Reserva</div><div class="hiw-d">Contacta directo al proveedor y agenda tu sesión</div></div>
+      <div class="hiw-step"><div class="hiw-icon">📸</div><div class="hiw-n">Paso 4</div><div class="hiw-t">¡Disfruta!</div><div class="hiw-d">Vive tu sesión y recibe fotos increíbles</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="foot-w">
+    <div class="foot-logo">Grad<span>Lens</span> <span style="font-size:11px;font-weight:300;color:rgba(253,251,246,.3);font-family:'Outfit'">México</span></div>
+    <div class="foot-links">
+      <a href="#">Para fotógrafos</a><a href="#">Privacidad</a><a href="#">Contacto</a><a href="#">Blog</a>
+    </div>
+  </div>
+  <div class="foot-copy">© 2025 GradLens · Hermosillo, Sonora · Todos los derechos reservados</div>
+</footer>
+
+<!-- DETAIL OVERLAY -->
+<div class="overlay" id="det-overlay" onclick="handleDetClick(event)">
+  <div class="d-modal" id="det-modal">
+    <button class="d-close" onclick="closeDetail()">×</button>
+    <div id="det-content"></div>
+  </div>
+</div>
+
+<!-- AUTH OVERLAY -->
+<div class="auth-ovl" id="auth-ovl" onclick="handleAuthClick(event)">
+  <div class="auth-modal">
+    <button class="auth-x" onclick="closeAuth()">×</button>
+    <div class="auth-logo">Grad<span>Lens</span></div>
+    <p class="auth-sub">Accede para reservar y dejar reseñas</p>
+    <div class="a-tabs">
+      <div class="a-tab on" onclick="switchAuth('login')">Iniciar sesión</div>
+      <div class="a-tab" onclick="switchAuth('register')">Registrarse</div>
+    </div>
+    <div class="a-panel on" id="ap-login">
+      <div class="alert" id="al-li"></div>
+      <div class="f-field"><label class="f-label">Correo</label><input class="f-ctrl" type="email" id="li-email" placeholder="tu@correo.com"></div>
+      <div class="f-field"><label class="f-label">Contraseña</label><input class="f-ctrl" type="password" id="li-pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+      <button class="btn-auth-full" onclick="doLogin()">Entrar</button>
+      <div class="a-switch">¿Sin cuenta? <a onclick="switchAuth('register')">Regístrate gratis</a></div>
+    </div>
+    <div class="a-panel" id="ap-reg">
+      <div class="alert" id="al-rg"></div>
+      <div class="f-field"><label class="f-label">Nombre completo</label><input class="f-ctrl" type="text" id="rg-name" placeholder="Tu nombre"></div>
+      <div class="f-field"><label class="f-label">Correo</label><input class="f-ctrl" type="email" id="rg-email" placeholder="tu@correo.com"></div>
+      <div class="f-field"><label class="f-label">Contraseña</label><input class="f-ctrl" type="password" id="rg-pass" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')doRegister()"></div>
+      <button class="btn-auth-full" onclick="doRegister()">Crear cuenta</button>
+      <div class="a-switch">¿Ya tienes cuenta? <a onclick="switchAuth('login')">Inicia sesión</a></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const VENDORS=[
+  {id:1,featured:true,verified:true,name:'Estudio Luz & Tiempo',category:'Estudio fotográfico',tag:'Premium',city:'Hermosillo',desc:'Más de 15 años capturando momentos especiales. Especialistas en fotografía de graduación con estética editorial y luz natural. Sets modernos y locaciones exteriores exclusivas en Hermosillo.',emoji:'📸',bg:'#1A1612',rating:4.9,startPrice:2800,contact:'662 200 1010',
+  packages:[
+    {name:'Esencial',tier:'Básico',price:2800,hi:false,feats:['1.5 hrs de sesión','40 fotos editadas','2 outfits','Galería digital']},
+    {name:'Distinción',tier:'Más popular',price:4500,hi:true,feats:['3 hrs de sesión','80 fotos editadas','4 outfits','Locación exterior','Álbum digital 60 págs.','1 impresión 50×70']},
+    {name:'Legado',tier:'Premium',price:7800,hi:false,feats:['Full day 6 hrs','Fotos ilimitadas','Outfits ilimitados','Maquillaje incluido','Álbum físico tapa dura','5 impresiones']},
+  ]},
+  {id:2,featured:true,verified:true,name:'Foto Arte Sonora',category:'Estudio fotográfico',tag:'Estudio',city:'Hermosillo',desc:'Studio boutique con enfoque en retratos artísticos. Fusionamos fotografía documental con moda para crear imágenes únicas que definen tu personalidad.',emoji:'🎓',bg:'#2E2820',rating:4.8,startPrice:2200,contact:'662 300 2020',
+  packages:[
+    {name:'Clásico',tier:'Básico',price:2200,hi:false,feats:['1 hr de sesión','25 fotos editadas','1 outfit','Galería digital']},
+    {name:'Artístico',tier:'Popular',price:3800,hi:true,feats:['2.5 hrs de sesión','60 fotos editadas','3 outfits','Set decorado','Galería premium']},
+    {name:'Editorial',tier:'Exclusivo',price:6500,hi:false,feats:['4 hrs de sesión','100+ fotos','Outfits ilimitados','Estilismo incluido','Video reel 60 seg.']},
+  ]},
+  {id:3,featured:false,verified:true,name:'Ángela Ruiz Photography',category:'Fotógrafa freelance',tag:'Freelance',city:'Hermosillo',desc:'Fotógrafa independiente con estilo natural y emocional. Capturo la autenticidad de cada graduado en locaciones al aire libre con luz natural.',emoji:'🌿',bg:'#1C2218',rating:5.0,startPrice:1600,contact:'662 111 3030',
+  packages:[
+    {name:'Natural',tier:'Esencial',price:1600,hi:false,feats:['1 hr al aire libre','30 fotos editadas','2 outfits','Entrega 10 días']},
+    {name:'Golden Hour',tier:'Popular',price:2800,hi:true,feats:['2 hrs al atardecer','55 fotos editadas','3 outfits','Locación a elección']},
+  ]},
+  {id:4,featured:false,verified:true,name:'Visuales del Norte',category:'Estudio fotográfico',tag:'Económico',city:'Obregón',desc:'Fotografía de graduación accesible y de calidad. Con equipo profesional y precios justos garantizamos resultados que te encantarán.',emoji:'🏙️',bg:'#131822',rating:4.5,startPrice:1200,contact:'644 400 4040',
+  packages:[
+    {name:'Básico',tier:'Económico',price:1200,hi:false,feats:['1 hr','20 fotos editadas','1 outfit','Galería digital']},
+    {name:'Completo',tier:'Popular',price:2100,hi:true,feats:['2 hrs','45 fotos editadas','3 outfits','Álbum digital']},
+    {name:'Full',tier:'Premium',price:3500,hi:false,feats:['3 hrs','70 fotos','Outfits ilimitados','Impresión incluida']},
+  ]},
+  {id:5,featured:false,verified:false,name:'Ramírez & Asociados',category:'Estudio fotográfico',tag:'Estudio',city:'Nogales',desc:'Estudio con amplia trayectoria en bodas y graduaciones. Sets modernos y atención personalizada en la zona norte de Sonora.',emoji:'📷',bg:'#201818',rating:4.3,startPrice:1900,contact:'631 500 5050',
+  packages:[
+    {name:'Express',tier:'Básico',price:1900,hi:false,feats:['1 hr','30 fotos','2 outfits','Galería digital']},
+    {name:'Premium',tier:'Popular',price:3200,hi:true,feats:['2.5 hrs','65 fotos','4 outfits','Impresión 40×60']},
+  ]},
+  {id:6,featured:false,verified:true,name:'Flash & Soul Studio',category:'Estudio fotográfico',tag:'Premium',city:'Guaymas',desc:'Fotografía de graduación en el puerto. Sesiones en playa, malecón y sets interiores únicos con vista al mar en Guaymas.',emoji:'🌊',bg:'#0D1A20',rating:4.7,startPrice:2500,contact:'622 600 6060',
+  packages:[
+    {name:'Costa',tier:'Especial',price:2500,hi:false,feats:['1.5 hrs en playa','40 fotos','2 outfits']},
+    {name:'Horizonte',tier:'Popular',price:4200,hi:true,feats:['3 hrs','70 fotos','4 outfits','Locación costera exclusiva']},
+  ]},
+  {id:7,featured:false,verified:true,name:'Marco & Luz',category:'Fotógrafo freelance',tag:'Freelance',city:'Hermosillo',desc:'Estilo moderno y urbano para graduados con actitud. Especializado en fotografía de moda aplicada a sesiones de graduación con ambientes urbanos.',emoji:'🏛️',bg:'#181624',rating:4.6,startPrice:2000,contact:'662 700 7070',
+  packages:[
+    {name:'Urbano',tier:'Moderno',price:2000,hi:false,feats:['1.5 hrs','35 fotos','2 outfits','Zona urbana']},
+    {name:'Fashion',tier:'Popular',price:3600,hi:true,feats:['3 hrs','65 fotos','4 outfits','Dirección de moda']},
+  ]},
+];
+
+const SEED={
+  1:[
+    {id:101,name:'Sofía Mendoza',pkg:'Distinción',rating:5,text:'El equipo fue increíblemente profesional. Mis fotos quedaron de revista, toda mi familia quedó impresionada.',date:'2025-03-15'},
+    {id:102,name:'Carlos Ibarra',pkg:'Legado',rating:5,text:'El paquete full day valió cada peso. El maquillaje y el set fueron de primer nivel.',date:'2025-02-10'},
+    {id:103,name:'Valeria Torres',pkg:'Esencial',rating:4,text:'Muy buena atención y calidad. El proceso fue ágil y las fotos llegaron antes de lo esperado.',date:'2025-01-22'},
+  ],
+  2:[
+    {id:201,name:'Andrea López',pkg:'Artístico',rating:5,text:'Me trataron como modelo de revista. Las fotos tienen una estética increíble, totalmente únicas.',date:'2025-04-01'},
+    {id:202,name:'Miguel Soto',pkg:'Editorial',rating:5,text:'El video reel quedó increíble. Se los recomiendo a todos mis compañeros.',date:'2025-03-20'},
+  ],
+  3:[
+    {id:301,name:'Paulina Gómez',pkg:'Golden Hour',rating:5,text:'Ángela es un genio. Captura emociones de una manera que no pensé posible. ¡Mis mejores fotos!',date:'2025-04-10'},
+    {id:302,name:'Diego Morales',pkg:'Natural',rating:5,text:'Excelente relación calidad-precio. Muy cómodo durante toda la sesión.',date:'2025-03-05'},
+  ],
+  4:[
+    {id:401,name:'Lorena Vázquez',pkg:'Completo',rating:4,text:'Buena calidad para el precio. El resultado fue mejor de lo que esperaba.',date:'2025-02-28'},
+    {id:402,name:'Roberto Leyva',pkg:'Básico',rating:5,text:'Perfectas para el precio. Muy recomendable para quienes buscan algo accesible.',date:'2025-01-15'},
+  ],
+  5:[{id:501,name:'Fernanda Cruz',pkg:'Premium',rating:4,text:'Buen estudio en Nogales. Las fotos tienen buena calidad aunque tardaron un poco más.',date:'2025-03-10'}],
+  6:[{id:601,name:'Renata Ochoa',pkg:'Horizonte',rating:5,text:'La sesión en playa fue MÁGICA. Las fotos con el mar de fondo son las más bonitas que he visto.',date:'2025-04-05'}],
+  7:[{id:701,name:'Iván Contreras',pkg:'Fashion',rating:5,text:'El enfoque urbano y de moda fue exactamente lo que buscaba. Fotos super originales.',date:'2025-04-08'}],
+};
+
+let userReviews={};
+let currentUser=JSON.parse(localStorage.getItem('gl_u')||'null');
+let regUsers=JSON.parse(localStorage.getItem('gl_us')||'[]');
+let activeTag='',activeSearch='',activeCity='',sortMode='rating';
+let openVendorId=null,pickedStar=0;
+
+function init(){updateNav();renderFeatured();renderGrid();}
+
+function allRvs(id){return[...(SEED[id]||[]),...(userReviews[id]||[])];}
+function avgRating(v){const r=allRvs(v.id);return r.length?(r.reduce((s,x)=>s+x.rating,0)/r.length):v.rating;}
+function inits(n){return(n||'').split(' ').slice(0,2).map(w=>w[0]).join('').toUpperCase();}
+function fmtDate(d){return new Date(d+'T12:00:00').toLocaleDateString('es-MX',{year:'numeric',month:'long',day:'numeric'});}
+function starsHtml(n){return'★'.repeat(n)+' '.repeat(5-n);}
+
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3400);}
+
+function renderFeatured(){
+  document.getElementById('feat-grid').innerHTML=VENDORS.filter(v=>v.featured).map(v=>`
+    <div class="vf-card" onclick="openDetail(${v.id})" style="background:${v.bg}">
+      <div class="vf-bg">${v.emoji}</div>
+      <div class="vf-overlay"></div>
+      ${v.verified?'<div class="vf-badge">✓ Verificado</div>':''}
+      <div class="vf-body">
+        <div class="vf-cat">${v.category}</div>
+        <div class="vf-name">${v.name}</div>
+        <div class="vf-desc">${v.desc.slice(0,105)}…</div>
+        <div class="vf-meta">
+          <span class="vf-rating"><span class="vf-stars">${starsHtml(Math.round(avgRating(v)))}</span> ${avgRating(v).toFixed(1)} (${allRvs(v.id).length})</span>
+          <span class="vf-price">Desde MX$${v.startPrice.toLocaleString()}</span>
+          <span class="vf-loc">📍 ${v.city}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function getFiltered(){
+  let l=[...VENDORS];
+  if(activeTag) l=l.filter(v=>v.tag===activeTag||v.category.toLowerCase().includes(activeTag.toLowerCase()));
+  if(activeSearch) l=l.filter(v=>v.name.toLowerCase().includes(activeSearch)||v.city.toLowerCase().includes(activeSearch)||v.desc.toLowerCase().includes(activeSearch));
+  if(activeCity) l=l.filter(v=>v.city===activeCity);
+  if(sortMode==='rating') l.sort((a,b)=>avgRating(b)-avgRating(a));
+  else if(sortMode==='price_asc') l.sort((a,b)=>a.startPrice-b.startPrice);
+  else if(sortMode==='price_desc') l.sort((a,b)=>b.startPrice-a.startPrice);
+  else if(sortMode==='reviews') l.sort((a,b)=>allRvs(b.id).length-allRvs(a.id).length);
+  return l;
+}
+
+function renderGrid(){
+  const l=getFiltered();
+  document.getElementById('res-count').textContent=l.length+' proveedores';
+  const g=document.getElementById('vgrid');
+  const e=document.getElementById('empty');
+  if(!l.length){g.innerHTML='';e.style.display='block';return;}
+  e.style.display='none';
+  g.innerHTML=l.map(v=>{
+    const r=allRvs(v.id),avg=avgRating(v);
+    return`<div class="vc" onclick="openDetail(${v.id})">
+      <div class="vc-thumb" style="background:${v.bg}">
+        <span>${v.emoji}</span><div class="vc-thumb-fade"></div>
+        ${v.verified?'<div class="vc-ver">✓ Verificado</div>':''}
+      </div>
+      <div class="vc-body">
+        <div class="vc-cat">${v.category}</div>
+        <div class="vc-name">${v.name}</div>
+        <div class="vc-desc">${v.desc}</div>
+        <div class="vc-loc">📍 ${v.city}</div>
+        <div class="vc-foot">
+          <div class="vc-rating"><span class="vc-stars">${'★'.repeat(Math.round(avg))}</span><span>${avg.toFixed(1)} · ${r.length} reseña${r.length!==1?'s':''}</span></div>
+          <div><div class="vc-price">MX$${v.startPrice.toLocaleString()} <small>desde</small></div><div class="vc-pkgs">${v.packages.length} paquetes</div></div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function openDetail(id){
+  openVendorId=id; pickedStar=0;
+  const v=VENDORS.find(x=>x.id===id);
+  const rvs=allRvs(id);
+  const avg=avgRating(v);
+  document.getElementById('det-content').innerHTML=`
+    <div class="d-hero" style="background:${v.bg}">
+      <span style="opacity:.2;font-size:74px">${v.emoji}</span>
+      <div class="d-hero-ovl"></div>
+      ${v.verified?'<div class="d-badge">✓ Proveedor verificado</div>':''}
+    </div>
+    <div class="d-body">
+      <div class="d-top">
+        <div>
+          <div class="d-cat">${v.category} · ${v.city}</div>
+          <div class="d-name">${v.name}</div>
+          <div class="d-meta">
+            <span><span style="color:var(--gold-l)">${starsHtml(Math.round(avg))}</span> ${avg.toFixed(1)} (${rvs.length} reseñas)</span>
+            <span>📍 ${v.city}</span>
+            <span>📞 ${v.contact}</span>
+          </div>
+        </div>
+        <div style="text-align:right;flex-shrink:0">
+          <div style="font-family:'Playfair Display',serif;font-size:21px;color:var(--ink)">Desde MX$${v.startPrice.toLocaleString()}</div>
+          <div style="font-size:12px;color:var(--muted)">${v.packages.length} paquetes</div>
+        </div>
+      </div>
+      <p class="d-desc">${v.desc}</p>
+      <div class="d-sec">
+        <div class="d-sec-title">Paquetes disponibles</div>
+        <div class="pkg-row">
+          ${v.packages.map(p=>`
+            <div class="pm ${p.hi?'hi':''}">
+              <div class="pm-badge">${p.tier}</div>
+              <div class="pm-name">${p.name}</div>
+              <div class="pm-price">MX$${p.price.toLocaleString()} <small>MXN</small></div>
+              <ul class="pm-feats">${p.feats.map(f=>`<li>${f}</li>`).join('')}</ul>
+              <button class="${p.hi?'btn-res':'btn-res out'}" onclick="handleReserve('${v.name}','${p.name}')">Reservar este paquete</button>
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="d-sec">
+        <div class="d-sec-title">Reseñas (${rvs.length})</div>
+        <div class="rv-list" id="rvlist-${id}">
+          ${rvs.length?rvs.map(r=>rvHtml(r)).join(''):'<p style="font-size:13px;color:var(--muted);padding:10px 0">Aún no hay reseñas. ¡Sé el primero en opinar!</p>'}
+        </div>
+        <div id="rvform-${id}">${buildForm(id,v.packages)}</div>
+      </div>
+    </div>`;
+  document.getElementById('det-overlay').classList.add('open');
+  document.body.style.overflow='hidden';
+}
+
+function rvHtml(r){return`
+  <div class="rv">
+    <div class="rv-head">
+      <div class="rv-user"><div class="rv-av">${inits(r.name)}</div><div><div class="rv-uname">${r.name}</div><div class="rv-pkg">Paquete ${r.pkg}</div></div></div>
+      <div class="rv-stars-d">${'★'.repeat(r.rating)}</div>
+    </div>
+    <p class="rv-text">"${r.text}"</p>
+    <div class="rv-date">${fmtDate(r.date)}</div>
+  </div>`;}
+
+function buildForm(vid,pkgs){
+  if(!currentUser) return`
+    <div class="rv-form">
+      <h5>¿Tuviste sesión aquí?</h5>
+      <p class="rv-form-sub">Inicia sesión para compartir tu experiencia.</p>
+      <button class="btn-res" style="width:auto;padding:9px 24px" onclick="closeDetail();openAuth()">Iniciar sesión para reseñar</button>
+    </div>`;
+  return`
+    <div class="rv-form">
+      <h5>Deja tu reseña</h5>
+      <p class="rv-form-sub">Tu opinión ayuda a otros graduados a elegir mejor.</p>
+      <div class="alert" id="ral-${vid}"></div>
+      <div class="f-row">
+        <div class="f-field"><label class="f-label">Tu nombre</label><input class="f-ctrl" type="text" value="${currentUser.name}" readonly style="opacity:.65"></div>
+        <div class="f-field"><label class="f-label">Paquete contratado</label><select class="f-ctrl" id="rpkg-${vid}"><option value="">Selecciona…</option>${pkgs.map(p=>`<option>${p.name}</option>`).join('')}</select></div>
+      </div>
+      <div class="f-field">
+        <label class="f-label">Calificación</label>
+        <div class="sp" id="sp-${vid}">${[1,2,3,4,5].map(i=>`<span class="sp-s" onclick="setStar(${vid},${i})" onmouseover="hoverStar(${vid},${i})" onmouseout="unhoverStar(${vid})">★</span>`).join('')}</div>
+      </div>
+      <div class="f-field"><label class="f-label">Tu comentario</label><textarea class="f-ctrl" id="rtxt-${vid}" placeholder="Cuéntanos cómo fue tu experiencia…"></textarea></div>
+      <button class="btn-res" style="width:auto;padding:9px 26px" onclick="submitRv(${vid})">Publicar reseña</button>
+    </div>`;}
+
+function setStar(vid,n){pickedStar=n;paintStar(vid,n);}
+function hoverStar(vid,n){paintStar(vid,n);}
+function unhoverStar(vid){paintStar(vid,pickedStar);}
+function paintStar(vid,n){const sp=document.getElementById('sp-'+vid);if(!sp)return;sp.querySelectorAll('.sp-s').forEach((s,i)=>s.classList.toggle('on',i<n));}
+
+function submitRv(vid){
+  const pkg=document.getElementById('rpkg-'+vid)?.value;
+  const txt=document.getElementById('rtxt-'+vid)?.value;
+  const al=document.getElementById('ral-'+vid);
+  const err=m=>{al.textContent=m;al.className='alert err show';};
+  if(!pickedStar){err('Selecciona una calificación (estrellas).');return;}
+  if(!pkg){err('Selecciona el paquete contratado.');return;}
+  if(!txt||txt.length<20){err('Escribe al menos 20 caracteres.');return;}
+  const rv={id:Date.now(),name:currentUser.name,pkg,rating:pickedStar,text:txt,date:new Date().toISOString().split('T')[0]};
+  if(!userReviews[vid])userReviews[vid]=[];
+  userReviews[vid].push(rv);
+  const listEl=document.getElementById('rvlist-'+vid);
+  if(listEl)listEl.innerHTML=allRvs(vid).map(rvHtml).join('');
+  const formEl=document.getElementById('rvform-'+vid);
+  if(formEl)formEl.innerHTML=`<div class="alert ok show" style="display:block">¡Gracias, ${currentUser.name.split(' ')[0]}! Tu reseña fue publicada.</div>`;
+  renderFeatured();renderGrid();
+  toast('¡Reseña publicada exitosamente!');
+}
+
+function closeDetail(){document.getElementById('det-overlay').classList.remove('open');document.body.style.overflow='';openVendorId=null;}
+function handleDetClick(e){if(e.target===e.currentTarget)closeDetail();}
+
+function handleReserve(vname,pname){
+  if(!currentUser){toast('Inicia sesión para reservar');openAuth();return;}
+  toast(`¡Solicitud enviada! ${vname} — ${pname}. Te contactarán pronto.`);
+}
+
+function setTag(btn,tag){activeTag=tag;document.querySelectorAll('.fchip').forEach(b=>b.classList.remove('on'));btn.classList.add('on');renderGrid();}
+function handleSearch(q){activeSearch=q.toLowerCase();renderGrid();}
+function handleCityFilter(c){activeCity=c;renderGrid();}
+function setSort(m){sortMode=m;renderGrid();}
+function scrollToVendors(){document.getElementById('main-section').scrollIntoView({behavior:'smooth'});}
+
+function openAuth(tab='login'){switchAuth(tab);document.getElementById('auth-ovl').classList.add('open');document.body.style.overflow='hidden';}
+function closeAuth(){document.getElementById('auth-ovl').classList.remove('open');document.body.style.overflow='';['al-li','al-rg'].forEach(id=>{const e=document.getElementById(id);if(e){e.className='alert';e.textContent='';} });}
+function handleAuthClick(e){if(e.target===e.currentTarget)closeAuth();}
+function switchAuth(tab){
+  document.querySelectorAll('.a-tab').forEach((t,i)=>t.classList.toggle('on',(tab==='login'?0:1)===i));
+  document.getElementById('ap-login').classList.toggle('on',tab==='login');
+  document.getElementById('ap-reg').classList.toggle('on',tab==='register');
+}
+
+function doLogin(){
+  const email=document.getElementById('li-email').value.trim();
+  const pass=document.getElementById('li-pass').value;
+  const al=document.getElementById('al-li');
+  const err=m=>{al.textContent=m;al.className='alert err show';};
+  if(!email||!pass){err('Completa todos los campos.');return;}
+  const u=regUsers.find(x=>x.email===email&&x.pass===pass);
+  if(!u){err('Correo o contraseña incorrectos.');return;}
+  currentUser={name:u.name,email:u.email};
+  localStorage.setItem('gl_u',JSON.stringify(currentUser));
+  closeAuth();updateNav();
+  if(openVendorId){const v=VENDORS.find(x=>x.id===openVendorId);const f=document.getElementById('rvform-'+openVendorId);if(f&&v){f.innerHTML=buildForm(openVendorId,v.packages);pickedStar=0;}}
+  toast(`¡Bienvenido/a, ${u.name.split(' ')[0]}!`);
+}
+function doRegister(){
+  const name=document.getElementById('rg-name').value.trim();
+  const email=document.getElementById('rg-email').value.trim();
+  const pass=document.getElementById('rg-pass').value;
+  const al=document.getElementById('al-rg');
+  const err=m=>{al.textContent=m;al.className='alert err show';};
+  if(!name||!email||!pass){err('Completa todos los campos.');return;}
+  if(pass.length<6){err('Contraseña mínima: 6 caracteres.');return;}
+  if(regUsers.find(u=>u.email===email)){err('Este correo ya está registrado.');return;}
+  regUsers.push({name,email,pass});
+  localStorage.setItem('gl_us',JSON.stringify(regUsers));
+  currentUser={name,email};
+  localStorage.setItem('gl_u',JSON.stringify(currentUser));
+  closeAuth();updateNav();
+  toast(`¡Cuenta creada! Bienvenido/a, ${name.split(' ')[0]}.`);
+}
+function doLogout(){currentUser=null;localStorage.removeItem('gl_u');updateNav();toast('Has cerrado sesión.');}
+function updateNav(){
+  document.getElementById('guest-nav').style.display=currentUser?'none':'flex';
+  const un=document.getElementById('user-nav');un.style.display=currentUser?'flex':'none';
+  if(currentUser){document.getElementById('av-init').textContent=inits(currentUser.name);document.getElementById('av-nm').textContent=currentUser.name.split(' ')[0];}
+}
+
+init();
+</script>
+</body>
+</html>

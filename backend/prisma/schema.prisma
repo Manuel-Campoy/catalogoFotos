@@ -1,0 +1,145 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Usuario - Usuarios registrados (pueden ser clientes o vendedores)
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  name          String
+  password      String
+  role          UserRole @default(USER)
+  phone         String?
+  city          String?
+  avatar        String?
+  
+  // Relaciones
+  vendor        Vendor?
+  reviews       Review[]
+  reservations  Reservation[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  VENDOR
+}
+
+// Vendedor - Fotógrafos/Estudios
+model Vendor {
+  id            Int      @id @default(autoincrement())
+  userId        Int      @unique
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  name          String
+  category      String
+  tag           String?
+  city          String
+  description   String   @db.Text
+  emoji         String?
+  bgColor       String?
+  verified      Boolean  @default(false)
+  contact       String
+  startPrice    Int
+  rating        Float    @default(0.0)
+  featured      Boolean  @default(false)
+  
+  // Relaciones
+  packages      Package[]
+  reviews       Review[]
+  reservations  Reservation[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("vendors")
+  @@index([city])
+  @@index([verified])
+}
+
+// Paquete - Paquetes de servicios del vendedor
+model Package {
+  id            Int      @id @default(autoincrement())
+  vendorId      Int
+  vendor        Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  name          String
+  tier          String
+  price         Int
+  features      String[]
+  highlighted   Boolean  @default(false)
+  
+  // Relaciones
+  reservations  Reservation[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("packages")
+}
+
+// Reseña - Reseñas de usuarios sobre vendedores
+model Review {
+  id            Int      @id @default(autoincrement())
+  vendorId      Int
+  vendor        Vendor   @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  userId        Int
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  packageName   String
+  rating        Int
+  text          String   @db.Text
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@map("reviews")
+  @@index([vendorId])
+  @@index([userId])
+  @@unique([vendorId, userId])
+}
+
+// Reserva - Reservas de sesiones
+model Reservation {
+  id            Int           @id @default(autoincrement())
+  vendorId      Int
+  vendor        Vendor        @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+  
+  userId        Int
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  packageId     Int
+  package       Package       @relation(fields: [packageId], references: [id], onDelete: Cascade)
+  
+  status        ReservationStatus @default(PENDING)
+  contactEmail  String
+  notes         String?       @db.Text
+  
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  @@map("reservations")
+  @@index([vendorId])
+  @@index([userId])
+  @@index([status])
+}
+
+enum ReservationStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}

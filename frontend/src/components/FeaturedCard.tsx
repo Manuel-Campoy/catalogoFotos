@@ -1,0 +1,1 @@
+// Featured vendor card component
